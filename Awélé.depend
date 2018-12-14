@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1544815656 source:d:\dev\c\awélé\main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+
