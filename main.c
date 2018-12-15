@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #define MAX_HOLES       12
 #define DEFAULT_SEEDS   3
@@ -9,7 +10,6 @@ typedef enum {
     FALSE,
     TRUE
 } BOOL;
-
 
 typedef struct {
     char* pseudo;
@@ -28,11 +28,10 @@ typedef struct {
     int seeds_captured;
 } Game;
 
-
 /// Principle Functions
 // Initialization Functions
 Player initialize_player(char* pseudo);
-Game initialize_game(char* p1_pseudo, char* p2_pseudo);
+Game initialize_game(char* pseudos[]);
 Hole* initialize_board();
 // Game Control Functions
 int normalize_index(int index);
@@ -41,35 +40,50 @@ BOOL execute_move(int index, Game* game);
 // Debug Functions
 void debug_print_game(Game game);
 void debug_print_board(Hole* board);
+char* read_string();
 
 int main()
 {
-    int hole = 0;
     BOOL game_finished = FALSE;
+    unsigned int hole = 0;
+    char* player_names[2];
 
     // Initialize Game
-    Game game = initialize_game("Nom du joueur 1", "Nom du joueur 2");
+    printf("Player 1, Enter your name: ");
+    player_names[0] = read_string();
+    printf("Player 2, Enter your name: ");
+    player_names[1] = read_string();
 
+    Game game = initialize_game(player_names);
     while (!game_finished){
         do {
             system("cls");
-            printf("ENTER 69 TO SHOW GAME SUMMARY!\n\n");
+            printf("ENTER 99 TO SHOW GAME SUMMARY!\n");
+            printf("ENTER 100 TO EXIT THE GAME!\n\n");
             debug_print_board(game.board);
-            if (game.current_turn == 0)
-                printf("Player 1, it is your turn:\nPick a case to play: ");
-            else
-                printf("Player 2, it is your turn:\nPick a case to play: ");
+            printf("%s, it is your turn:\nPick a case to play: ", player_names[game.current_turn]);
             scanf("%d", &hole);
-            if (hole == 69){
+            if (hole == 99){
                 system("cls");
                 debug_print_game(game);
                 system("pause");
+            } else if (hole == 100)
+            {
+                free(player_names[0]);
+                free(player_names[1]);
+
+                return 0;
             }
-        } while (hole == 69 || !execute_move(hole, &game));
+        } while (hole == 99 || !execute_move(hole, &game));
         debug_print_board(game.board);
     }
     printf("Game Summary\n");
     debug_print_game(game);
+
+
+    free(player_names[0]);
+    free(player_names[1]);
+    return 0;
 }
 
 /// Principle Functions
@@ -82,7 +96,7 @@ Player initialize_player(char* pseudo)
 }
 Hole* initialize_board()
 {
-    Hole* board = malloc(sizeof(Hole) * MAX_HOLES);
+    Hole* board = (Hole*) malloc(sizeof(Hole) * MAX_HOLES);
     for (int i = 0; i < MAX_HOLES; i++)
     {
         Hole h;
@@ -92,13 +106,13 @@ Hole* initialize_board()
     }
     return board;
 }
-Game initialize_game(char* p1_pseudo, char* p2_pseudo)
+Game initialize_game(char* pseudos[])
 {
     srand(time(0));
     Game game;
     game.board = initialize_board();
-    game.players[0] = initialize_player(p1_pseudo);
-    game.players[1] = initialize_player(p2_pseudo);
+    game.players[0] = initialize_player(pseudos[0]);
+    game.players[1] = initialize_player(pseudos[1]);
     game.current_turn = rand() % 2;
     game.seeds_captured = 0;
     return game;
@@ -143,7 +157,7 @@ BOOL execute_move(int index, Game* game)
         printf("'Semaille' phase has been completed...\n\n");
         system("pause");
 
-        // Récolte
+        // RÃ©colte
         int last_hole_index = normalize_index(index_nb_seeds+index);
         int last_hole_seeds_sum = (game->board+last_hole_index)->nb_seeds;
 
@@ -190,7 +204,7 @@ void debug_print_game(Game game)
         printf("%d\t", h.nb_seeds);
     }
     printf("\n==================================================================================================================\n\n");
-    printf("Player's Turn: %d\n", game.current_turn);
+    printf("Player's Turn: %s\n", game.players[game.current_turn].pseudo);
     printf("Number of grains captured: %d\n", game.seeds_captured);
     printf("----------------------------\n");
 }
@@ -213,4 +227,29 @@ void debug_print_board(Hole* board)
         printf("%d\t", h.nb_seeds);
     }
     printf("\n==================================================================================================================\n\n");
+}
+char* read_string()
+{
+    unsigned int len_max = 16;
+    unsigned int current_size = 16;
+    char* ch = malloc(len_max);
+
+    if (ch != NULL)
+    {
+        int c = EOF;
+        unsigned int i = 0;
+        while ((c = getchar()) != '\n' && c != EOF)
+        {
+            ch[i++] =(char)c;
+
+            if (i == current_size)
+            {
+                current_size = i + len_max;
+                ch = realloc(ch, current_size);
+            }
+        }
+        ch[i] = '\0';
+    }
+
+    return ch;
 }
