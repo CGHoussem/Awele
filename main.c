@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include "game.h"
+#include "saves.h"
 
 #define MAX_HOLES       12
 #define DEFAULT_SEEDS   3
@@ -11,22 +13,7 @@ typedef enum {
     TRUE
 } BOOL;
 
-typedef struct {
-    char* pseudo;
-    int score;
-} Player;
 
-typedef struct {
-    int nb_seeds;
-    int owner_id;
-} Hole;
-
-typedef struct {
-    Hole* board;
-    Player players[2];
-    int current_turn;
-    int seeds_captured;
-} Game;
 
 /// Principle Functions
 // Initialization Functions
@@ -46,31 +33,49 @@ int main()
 {
     BOOL game_finished = FALSE;
     unsigned int hole = 0;
-    char* player_names[2];
 
+
+    //*** Comment either part 1 or 2 to start a new game or to load a save ***
+
+    //**** PART 1 ****
     // Initialize Game
-    printf("Player 1, Enter your name: ");
-    player_names[0] = read_string();
-    printf("Player 2, Enter your name: ");
-    player_names[1] = read_string();
+    //char* player_names[2];
+    // printf("Player 1, Enter your name: ");
+    // player_names[0] = read_string();
+    // printf("Player 2, Enter your name: ");
+    // player_names[1] = read_string();
+    //
+    // Game game = initialize_game(player_names);
+    // save_game(game, "test");
+    //*****************
 
-    Game game = initialize_game(player_names);
+    //**** PART 2 ****
+    Game game;
+    load_game(&game, "test");
+    //*****************
+
+
+
     while (!game_finished){
         do {
             system("cls");
             printf("ENTER 99 TO SHOW GAME SUMMARY!\n");
             printf("ENTER 100 TO EXIT THE GAME!\n\n");
             debug_print_board(game.board);
-            printf("%s, it is your turn:\nPick a case to play: ", player_names[game.current_turn]);
+
+            printf("%s, it is your turn:\nPick a case to play: ", game.players[game.current_turn].pseudo);
             scanf("%d", &hole);
+
             if (hole == 99){
                 system("cls");
                 debug_print_game(game);
                 system("pause");
             } else if (hole == 100)
             {
-                free(player_names[0]);
-                free(player_names[1]);
+                //**** PART 1 ****
+                // free(player_names[0]);
+                // free(player_names[1]);
+                //*****************
 
                 return 0;
             }
@@ -80,9 +85,10 @@ int main()
     printf("Game Summary\n");
     debug_print_game(game);
 
-
-    free(player_names[0]);
-    free(player_names[1]);
+    //**** PART 1 ****
+    // free(player_names[0]);
+    // free(player_names[1]);
+    //*****************
     return 0;
 }
 
