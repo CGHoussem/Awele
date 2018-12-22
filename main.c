@@ -40,46 +40,53 @@ int main()
     //**** PART 1 ****
     // Initialize Game
     //char* player_names[2];
-    // printf("Player 1, Enter your name: ");
+     //printf("Player 1, Enter your name: ");
     // player_names[0] = read_string();
-    // printf("Player 2, Enter your name: ");
+     //printf("Player 2, Enter your name: ");
     // player_names[1] = read_string();
     //
     // Game game = initialize_game(player_names);
-    // save_game(game, "test");
+    // save_game(game, "test2");
     //*****************
 
     //**** PART 2 ****
     Game game;
-    load_game(&game, "test");
+    load_game(&game, "saveGame");
     //*****************
 
 
 
     while (!game_finished){
         do {
-            system("cls");
+            system("clear");
             printf("ENTER 99 TO SHOW GAME SUMMARY!\n");
-            printf("ENTER 100 TO EXIT THE GAME!\n\n");
+            printf("ENTER 100 TO EXIT THE GAME!\n");
+            printf("ENTER 200 TO SAVE THE GAME\n\n");
             debug_print_board(game.board);
 
             printf("%s, it is your turn:\nPick a case to play: ", game.players[game.current_turn].pseudo);
             scanf("%d", &hole);
 
             if (hole == 99){
-                system("cls");
+                system("clear");
                 debug_print_game(game);
-                system("pause");
+                system("sleep 4");
             } else if (hole == 100)
             {
                 //**** PART 1 ****
-                // free(player_names[0]);
-                // free(player_names[1]);
+                //free(player_names[0]);
+                //free(player_names[1]);
                 //*****************
 
                 return 0;
             }
-        } while (hole == 99 || !execute_move(hole, &game));
+            else if (hole==200)
+            {
+              save_game(game, "saveGame");
+              printf("SAVE DONE !\n");
+              system("sleep 1");
+            }
+        } while (hole == 99|| hole == 200 || !execute_move(hole, &game));
         debug_print_board(game.board);
     }
     printf("Game Summary\n");
@@ -161,7 +168,7 @@ BOOL execute_move(int index, Game* game)
             return FALSE;
         }
         printf("'Semaille' phase has been completed...\n\n");
-        system("pause");
+        system("sleep 4");
 
         // Récolte
         int last_hole_index = normalize_index(index_nb_seeds+index);
@@ -170,17 +177,18 @@ BOOL execute_move(int index, Game* game)
         if ((last_hole_seeds_sum == 2 || last_hole_seeds_sum == 3) && (hole_index_to_player_index(last_hole_index)) != game->current_turn)
         {
             printf("---> IL EXISTE DU RECOLTE\n");
-            system("pause");
+            system("sleep 4");
             game->players[game->current_turn].score += last_hole_seeds_sum;
             (game->board+last_hole_index)->nb_seeds = 0;
             game->seeds_captured += last_hole_seeds_sum;
             printf("---> Win %d seeds\n", last_hole_seeds_sum);
-            system("pause");
+            system("sleep 4");
         }
         // Change of players turn
         game->current_turn = (game->current_turn == 1) ? 0 : 1;
     } else {
         printf("Invalid move!!\n");
+        system("sleep 2");
         return FALSE;
     }
     return TRUE;
