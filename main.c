@@ -13,8 +13,6 @@ typedef enum {
     TRUE
 } BOOL;
 
-
-
 /// Principle Functions
 // Initialization Functions
 Player initialize_player(char* pseudo);
@@ -33,8 +31,6 @@ int main()
 {
     BOOL game_finished = FALSE;
     unsigned int hole = 0;
-
-
     //*** Comment either part 1 or 2 to start a new game or to load a save ***
 
     //**** PART 1 ****
@@ -54,39 +50,44 @@ int main()
     load_game(&game, "saveGame");
     //*****************
 
-
-
     while (!game_finished){
         do {
             system("clear");
             printf("ENTER 99 TO SHOW GAME SUMMARY!\n");
             printf("ENTER 100 TO EXIT THE GAME!\n");
-            printf("ENTER 200 TO SAVE THE GAME\n\n");
+            printf("ENTER 200 TO SAVE THE GAME\n");
+            printf("ENTER 250 TO LOAD A GAME\n\n");
             debug_print_board(game.board);
 
             printf("%s, it is your turn:\nPick a case to play: ", game.players[game.current_turn].pseudo);
             scanf("%d", &hole);
 
-            if (hole == 99){
-                system("clear");
-                debug_print_game(game);
-                system("sleep 4");
-            } else if (hole == 100)
-            {
-                //**** PART 1 ****
-                //free(player_names[0]);
-                //free(player_names[1]);
-                //*****************
-
-                return 0;
+            switch (hole){
+                case 99:
+                    system("clear");
+                    debug_print_game(game);
+                    system("sleep 4");
+                    break;
+                case 100:
+                    //**** PART 1 ****
+                    //free(player_names[0]);
+                    //free(player_names[1]);
+                    //*****************
+                    return 0;
+                    break;
+                case 200:
+                    save_game(game, "saveGame");
+                    printf("SAVE DONE !\n");
+                    system("sleep 1");
+                    break;
+                case 250:
+                    load_game(&game, "saveGame");
+                    printf("LOAD DONE !\n");
+                    system("sleep 2");
+                    break;
+                default: break;
             }
-            else if (hole==200)
-            {
-              save_game(game, "saveGame");
-              printf("SAVE DONE !\n");
-              system("sleep 1");
-            }
-        } while (hole == 99|| hole == 200 || !execute_move(hole, &game));
+        } while (hole == 99 || hole == 200 || hole == 250 || !execute_move(hole, &game));
         debug_print_board(game.board);
     }
     printf("Game Summary\n");
@@ -123,6 +124,7 @@ Game initialize_game(char* pseudos[])
 {
     srand(time(0));
     Game game;
+    game.gs = MENU;
     game.board = initialize_board();
     game.players[0] = initialize_player(pseudos[0]);
     game.players[1] = initialize_player(pseudos[1]);
@@ -161,8 +163,13 @@ BOOL execute_move(int index, Game* game)
             for (int i=1; i <= index_nb_seeds; i++)
             {
                 int x = (normalize_index(index + i));
-                (game->board+x)->nb_seeds++;
-                printf("** Put one in %d\n", x);
+                // Cas: le trou n'as aucune graine
+                if ((game->board+x)->nb_seeds != 0) {
+                    (game->board+x)->nb_seeds++;
+                    printf("** Put one in %d\n", x);
+                } else {
+                    index_nb_seeds++;
+                }
             }
         } else {
             return FALSE;
@@ -201,23 +208,7 @@ void debug_print_game(Game game)
     printf("Players:\n");
     printf("Player 1: %s (%d)\n", game.players[0].pseudo, game.players[0].score);
     printf("Player 2: %s (%d)\n", game.players[1].pseudo, game.players[1].score);
-    printf("==================================================================================================================\n");
-    printf("index:\t");
-    for (int i = 0; i < MAX_HOLES; i++)
-    {
-        if (i == MAX_HOLES/2)
-            printf("|\t");
-        printf("%d\t", i);
-    }
-    printf("\nhole:\t");
-    for (int i = 0; i < MAX_HOLES; i++)
-    {
-        Hole h = *(game.board+i);
-        if (i == MAX_HOLES/2)
-            printf("|\t");
-        printf("%d\t", h.nb_seeds);
-    }
-    printf("\n==================================================================================================================\n\n");
+    debug_print_board(game.board);
     printf("Player's Turn: %s\n", game.players[game.current_turn].pseudo);
     printf("Number of grains captured: %d\n", game.seeds_captured);
     printf("----------------------------\n");
@@ -225,6 +216,8 @@ void debug_print_game(Game game)
 void debug_print_board(Hole* board)
 {
     printf("==================================================================================================================\n");
+    printf("\t\tPLAYER 1\t\t\t\t|\t\tPLAYER 2\n");
+    printf("==================================================================================================================\n");
     printf("index:\t");
     for (int i = 0; i < MAX_HOLES; i++)
     {
@@ -232,7 +225,7 @@ void debug_print_board(Hole* board)
             printf("|\t");
         printf("%d\t", i);
     }
-    printf("\nhole:\t");
+    printf("\nseeds:\t");
     for (int i = 0; i < MAX_HOLES; i++)
     {
         Hole h = *(board+i);
