@@ -163,8 +163,8 @@ BOOL execute_move(int index, Game* game)
             for (int i=1; i <= index_nb_seeds; i++)
             {
                 int x = (normalize_index(index + i));
-                // Cas: le trou n'as aucune graine
-                if ((game->board+x)->nb_seeds != 0) {
+                // Cas spécial
+                if (index != x) {
                     (game->board+x)->nb_seeds++;
                     printf("** Put one in %d\n", x);
                 } else {
