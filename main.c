@@ -29,6 +29,12 @@ char* read_string();
 
 int main()
 {
+
+    //Load previous saves
+
+    Scores oldGames;
+    load_scores(&oldGames);
+
     BOOL game_finished = FALSE;
     unsigned int hole = 0;
     //*** Comment either part 1 or 2 to start a new game or to load a save ***

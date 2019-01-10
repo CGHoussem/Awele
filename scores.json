@@ -1,0 +1,1 @@
+{ "length": 3, "scores": [ { "player1_name": "Jake", "player1_score": 9999, "player2_name": "Elwood", "player2_score": 4 }, { "player1_name": "John Doe", "player1_score": 51, "player2_name": "Butch", "player2_score": 98 }, { "player1_name": "Hans", "player1_score": 17, "player2_name": "John Doe", "player2_score": 48 } ] }

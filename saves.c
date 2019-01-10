@@ -23,7 +23,7 @@ void save_game(Game game, char * save_name){
     json_object_object_add(j_game, "seeds_captured", j_seeds_captured);
 
 
-        //game.board
+        //game.scores
     json_object * j_board_array = json_object_new_array();
     json_object **  j_holes = (json_object**) malloc(12 * sizeof(json_object*));
 
@@ -180,4 +180,121 @@ void load_game(Game * game, char * save_name){
 
 
 //Score saves
-//TODO
+void save_scores(Scores  scores){
+    json_object * j_Scores = json_object_new_object();
+
+        //Scores.length
+    json_object * j_length = json_object_new_int(scores.length);
+    json_object_object_add(j_Scores, "length", j_length);
+
+    json_object * j_scores_array = json_object_new_array();
+    json_object **  j_scores = (json_object**) malloc(scores.length * sizeof(json_object*));
+    json_object **  j_name1 = (json_object**) malloc(scores.length * sizeof(json_object*));
+    json_object **  j_score1 = (json_object**) malloc(scores.length * sizeof(json_object*));
+    json_object **  j_name2 = (json_object**) malloc(scores.length * sizeof(json_object*));
+    json_object **  j_score2 = (json_object**) malloc(scores.length * sizeof(json_object*));
+
+    for(int i=0; i<scores.length; i++){
+        j_scores[i] = json_object_new_object();
+
+            //hole.player1_name
+        j_name1[i] = json_object_new_string(scores.scores[i].player1_name);
+        json_object_object_add(j_scores[i], "player1_name", j_name1[i]);
+
+            //hole.player1_score
+        j_score1[i] = json_object_new_int(scores.scores[i].player1_score);
+        json_object_object_add(j_scores[i], "player1_score", j_score1[i]);
+
+            //hole.player2_name
+        j_name2[i] = json_object_new_string(scores.scores[i].player2_name);
+        json_object_object_add(j_scores[i], "player2_name", j_name2[i]);
+
+            //hole.player2_score
+        j_score2[i] = json_object_new_int(scores.scores[i].player2_score);
+        json_object_object_add(j_scores[i], "player2_score", j_score2[i]);
+
+            //Appending to array
+        json_object_array_add(j_scores_array, j_scores[i]);
+    }
+    json_object_object_add(j_Scores, "scores", j_scores_array);
+
+
+        //Copy of string to the JSON file
+    char *  path = (char*) malloc(11 * sizeof(char));
+    path[0] = '\0';
+    path = strcat(path, "scores.json");
+
+    FILE * save = fopen(path, "w");
+
+    fputs(json_object_to_json_string(j_Scores), save);
+
+
+        //Freeing
+    json_object_put(j_Scores); //All children object are alsoo freed
+    free(path);
+    fclose(save);
+
+    free(j_scores);
+    free(j_name1);
+    free(j_score1);
+
+    free(j_name2);
+    free(j_score2);
+};
+
+
+
+void load_scores(Scores * scores){
+
+        //Access to the JSON file
+    FILE * save = fopen("scores.json", "r");
+
+    char j_string [1000];
+    j_string[0] = '\0';
+    fgets(j_string, 1000, save);
+    fclose(save);
+
+    json_object * j_scores = json_tokener_parse(j_string);
+
+    json_object * j_length;
+    json_object_object_get_ex(j_scores, "length", &j_length);
+    scores->length = json_object_get_int(j_length);
+
+    scores->scores = (Score *) malloc(scores->length * sizeof(Score));
+
+        //Scores.scores
+    json_object * j_scores_array;
+    json_object_object_get_ex(j_scores, "scores", &j_scores_array);
+
+    for(int i=0; i<scores->length; i++){
+
+        json_object * j_players = json_object_array_get_idx(j_scores_array, i);
+
+            //Score.player1_name
+        json_object * j_player1_pseudo;
+        json_object_object_get_ex(j_players, "player1_name", &j_player1_pseudo);
+        scores->scores[i].player1_name = (char*) malloc((json_object_get_string_len(j_player1_pseudo)+1) * sizeof(char));
+        memset(scores->scores[i].player1_name, '\0', (json_object_get_string_len(j_player1_pseudo)+1));
+        strcpy(scores->scores[i].player1_name, json_object_get_string(j_player1_pseudo));
+
+            //Score.player1_score
+        json_object * j_player1_score;
+        json_object_object_get_ex(j_players, "score", &j_player1_score);
+        scores->scores[i].player1_score = json_object_get_int(j_player1_score);
+
+            //Score.player2_name
+        json_object * j_player2_pseudo;
+        json_object_object_get_ex(j_players, "player2_name", &j_player2_pseudo);
+        scores->scores[i].player2_name = (char*) malloc((json_object_get_string_len(j_player2_pseudo)+1) * sizeof(char));
+        memset(scores->scores[i].player2_name, '\0', (json_object_get_string_len(j_player2_pseudo)+1));
+        strcpy(scores->scores[i].player2_name, json_object_get_string(j_player2_pseudo));
+
+            //Score.player2_score
+        json_object * j_player2_score;
+        json_object_object_get_ex(j_players, "score", &j_player2_score);
+        scores->scores[i].player2_score = json_object_get_int(j_player2_score);
+    }
+
+    json_object_put(j_scores);
+
+}
