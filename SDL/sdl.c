@@ -1,8 +1,5 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_image.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "sdl.h"
+
 int main(int argc, char** argv)
 {
     /* Initialization */
@@ -18,9 +15,9 @@ int main(int argc, char** argv)
         SDL_Renderer* Renderer = NULL;
         SDL_Surface* Sprite = NULL;
         SDL_Texture* Texture = NULL;
-
+        SDL_Rect dest;
         SDL_Event event;
-        int keep = 1;
+        bool keep = 1;
 
         Window = SDL_CreateWindow("Super Awélé",SDL_WINDOWPOS_UNDEFINED,
                                                                   SDL_WINDOWPOS_UNDEFINED,
@@ -39,17 +36,34 @@ int main(int argc, char** argv)
                     Texture=SDL_CreateTextureFromSurface(Renderer,Sprite);
                     if(Texture)
                     {
-                        SDL_Rect dest = { 0 , 0, 800 , 600 };
+                         dest.x = 0;
+                         dest.y = 0;
+                         dest.w = 800;
+                         dest.h = 600;
                         SDL_RenderCopy(Renderer,Texture,NULL,&dest);
                         SDL_RenderPresent(Renderer);
 
-                            while(keep)
+                            while(keep)//boucle principale
                             {
                               SDL_WaitEvent(&event);
                               switch(event.type)
                               {
                                 case SDL_QUIT:
                                 keep = 0;
+                                break;
+
+                                case SDL_MOUSEBUTTONUP :
+                                if (event.button.y>235 && event.button.y<=308 && event.button.x>298 && event.button.x<=460)
+                                    {
+                                        PlayMenu(Renderer,Sprite,Texture,dest,&keep);
+                                    }
+
+
+                                //Button Quit
+                                    if (event.button.y>468 && event.button.y<=542 && event.button.x>274 && event.button.x<=463)
+                                        {
+                                            keep = 0;
+                                        }
                                 break;
                               }
                             }
@@ -87,4 +101,70 @@ int main(int argc, char** argv)
     SDL_Quit();
 
     return 0;
+}
+
+
+
+void PlayMenu(SDL_Renderer* Renderer,SDL_Surface* Sprite,SDL_Texture* Texture,SDL_Rect dest,bool* keep )
+{
+    Sprite=IMG_Load("Pictures/playmenu.png");
+    bool keep2=1;
+    SDL_Event event2;
+    if(Sprite)
+    {
+        Texture=SDL_CreateTextureFromSurface(Renderer,Sprite);
+        if(Texture)
+        {
+             dest.x = 0;
+             dest.y = 0;
+             dest.w = 800;
+             dest.h = 600;
+            SDL_RenderCopy(Renderer,Texture,NULL,&dest);
+            SDL_RenderPresent(Renderer);
+
+            while(keep2) //boule secondaire
+            {
+              SDL_WaitEvent(&event2);
+              switch(event2.type)
+              {
+                case SDL_QUIT:
+                keep2 = 0; // quitte la boucle secondaire
+                *keep=0; //permet de quitter la boucle principale => ferme la fenêtre
+                break;
+
+                case SDL_MOUSEBUTTONUP :
+                //Load Button
+                if (event2.button.y>332 && event2.button.y<=401 && event2.button.x>159 && event2.button.x<=670)
+                    {
+                        fprintf(stderr, "click on Load \n");
+
+                    }
+                //1vs1 Button
+                    if (event2.button.y>211 && event2.button.y<=269 && event2.button.x>485 && event2.button.x<=642)
+                        {
+                            fprintf(stderr, "click on 1 vs 1 \n");
+
+                        }
+
+                //1vsIA Button
+                    if (event2.button.y>211 && event2.button.y<=269 && event2.button.x>195 && event2.button.x<=378)
+                        {
+                            fprintf(stderr, "click on 1 vs IA \n");
+                        }
+
+
+                //ReturnButton
+                    if (event2.button.y>521&& event2.button.y<=582 && event2.button.x>12 && event2.button.x<=195)
+                        {
+                            Sprite=IMG_Load("Pictures/menu.png");
+                            Texture=SDL_CreateTextureFromSurface(Renderer,Sprite);
+                            SDL_RenderCopy(Renderer,Texture,NULL,&dest);
+                            SDL_RenderPresent(Renderer);
+                            keep2 = 0;
+                        }
+                break;
+              }
+            }
+        }
+    }
 }
