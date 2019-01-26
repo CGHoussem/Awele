@@ -30,8 +30,6 @@ void ai_turn(Game * game){
     //Assumes that the player is indeed AI
     //Verification must be done before calling
 
-    printf("Starting turn for %d\n", game->current_turn);
-
     srand(time(NULL));
 
     int minIndex;
@@ -56,9 +54,7 @@ void ai_turn(Game * game){
     int previousScore = game->players[game->current_turn].score;
     while(i <= maxIndex){
 
-        printf("Testing index %d\n", i);
-
-        if(testGame.board[i].nb_seeds){
+        if(game->board[i].nb_seeds){
             canPlay = 1;
         }
 
@@ -78,7 +74,6 @@ void ai_turn(Game * game){
     //If no way to score i found, pick random
     if(i > maxIndex){
 
-        printf("Selecting random tile\n");
         bool hasPlayed = false;
         int tileId = rand() %6;
         int testId = tileId;
@@ -104,5 +99,4 @@ void ai_turn(Game * game){
         }while(testId != tileId);
     }
 
-    printf("Finished turn\n");
 }

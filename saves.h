@@ -1,3 +1,5 @@
+#pragma once
+
 #include "game.h"
 
 typedef struct{

@@ -13,6 +13,7 @@ typedef enum {
 typedef struct{
     char* pseudo;
     int score;
+    int isAI;
 }Player;
 
 typedef struct{
@@ -20,12 +21,9 @@ typedef struct{
     int owner_id;
 }Hole;
 
-typedef enum{
-	MENU, P1_INPUT, P2_INPUT, LOAD, SAVE, PVP, PVC
-} GameState;
+
 
 typedef struct{
-	GameState gs;
     Hole* board;
     Player players[2];
     int current_turn;
@@ -36,7 +34,8 @@ typedef struct{
 
 Player initialize_player(char* pseudo);
 Hole* initialize_board();
-Game initialize_game(char* pseudos[]);
+Game initialize_game(char * pseudo1, char * pseudo2);
 int normalize_index(int index);
 int hole_index_to_player_index(int hole_index);
 BOOL execute_move(int index, Game* game);
+int test_end_game(Game game);

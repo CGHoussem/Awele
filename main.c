@@ -1,164 +1,402 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
 #include "game.h"
 #include "saves.h"
-#include "ai.h"
+#include "SDL/display.h"
+#include "SDL/ingame.h"
+
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 
-// Debug Functions
-void debug_print_game(Game game);
-void debug_print_board(Hole* board);
-char* read_string();
-
-int main()
+int main(int argc, char ** argv)
 {
 
-
-    //Load previous saves
-
-    Scores oldGames;
-    load_scores(&oldGames);
-
-    BOOL game_finished = FAL;
-    unsigned int hole = 0;
-    //*** Comment either part 1 or 2 to start a new game or to load a save ***
-
-    //**** PART 1 ****
-    // Initialize Game
-    //char* player_names[2];
-     //printf("Player 1, Enter your name: ");
-    // player_names[0] = read_string();
-     //printf("Player 2, Enter your name: ");
-    // player_names[1] = read_string();
-    //
-    // Game game = initialize_game(player_names);
-    // save_game(game, "test2");
-    //*****************
-
-    //**** PART 2 ****
+        //*** Vars initialization ***
     Game game;
-    load_game(&game, "saveGame");
-    //*****************
 
-    while (!game_finished){
-        do {
-            //system("clear");
-            printf("ENTER 99 TO SHOW GAME SUMMARY!\n");
-            printf("ENTER 100 TO EXIT THE GAME!\n");
-            printf("ENTER 200 TO SAVE THE GAME\n");
-            printf("ENTER 250 TO LOAD A GAME\n\n");
-            debug_print_board(game.board);
+    Images images;
+    gameState gs = MENU;
 
-            printf("%s, it is your turn:\nPick a case to play: ", game.players[game.current_turn].pseudo);
-            scanf("%d", &hole);
-
-            switch (hole){
-                case 99:
-                    system("clear");
-                    debug_print_game(game);
-                    system("sleep 4");
-                    break;
-                case 100:
-                    //**** PART 1 ****
-                    //free(player_names[0]);
-                    //free(player_names[1]);
-                    //*****************
-                    return 0;
-                    break;
-                case 200:
-                    save_game(game, "saveGame");
-                    printf("SAVE DONE !\n");
-                    system("sleep 1");
-                    break;
-                case 250:
-                    load_game(&game, "saveGame");
-                    printf("LOAD DONE !\n");
-                    system("sleep 2");
-                    break;
-                default: break;
-            }
-            //Replace execute move by ai_turn(&game) to test AI
-        } while (hole == 99 || hole == 200 || hole == 250 || !execute_move(hole, &game));
-        debug_print_board(game.board);
-    }
-    printf("Game Summary\n");
-    debug_print_game(game);
-
-    //**** PART 1 ****
-    // free(player_names[0]);
-    // free(player_names[1]);
-    //*****************
-    return 0;
-}
+    unsigned int TexteLength = 0,
+        TexteLength2 = 0,
+        TexteLength3 = 0;
+    char* TexteInput = (char*) calloc(16,sizeof(char)),
+        * TexteInput2 = (char*) calloc(16,sizeof(char)),
+        * TexteInput3 = (char*) calloc(16,sizeof(char));
 
 
+    bool isJ2TexteInput = false,
+         isJ1TexteInput = false,
+         isJIATexteInput = false,
+         isLoadTexteInput = false;
 
-
-
-
-
-/// Debug Functions
-void debug_print_game(Game game)
-{
-    printf("Debug Print Game\n");
-    printf("Players:\n");
-    printf("Player 1: %s (%d)\n", game.players[0].pseudo, game.players[0].score);
-    printf("Player 2: %s (%d)\n", game.players[1].pseudo, game.players[1].score);
-    debug_print_board(game.board);
-    printf("Player's Turn: %s\n", game.players[game.current_turn].pseudo);
-    printf("Number of grains captured: %d\n", game.seeds_captured);
-    printf("----------------------------\n");
-}
-
-
-void debug_print_board(Hole* board)
-{
-    printf("==================================================================================================================\n");
-    printf("\t\tPLAYER 1\t\t\t\t|\t\tPLAYER 2\n");
-    printf("==================================================================================================================\n");
-    printf("index:\t");
-    for (int i = 0; i < MAX_HOLES; i++)
+    if (SDL_Init(SDL_INIT_VIDEO) != 0 )
     {
-        if (i == MAX_HOLES/2)
-            printf("|\t");
-        printf("%d\t", i);
+        fprintf(stdout,"Échec de l'initialisation de la SDL (%s)\n",SDL_GetError());
+        return EXIT_FAILURE;
     }
-    printf("\nseeds:\t");
-    for (int i = 0; i < MAX_HOLES; i++)
-    {
-        Hole h = *(board+i);
-        if (i == MAX_HOLES/2)
-            printf("|\t");
-        printf("%d\t", h.nb_seeds);
+
+     /*Initialization of font */
+    TTF_Init();
+    TTF_Font* TexteFont = TTF_OpenFont("SDL/arial.ttf", 40);
+    if (TexteFont == NULL){
+        printf("Error : %s\n", SDL_GetError());
+        return EXIT_FAILURE;
     }
-    printf("\n==================================================================================================================\n\n");
-}
+    /* Creation of the window */
+    SDL_Window* Window = SDL_CreateWindow("Super Awélé",
+                            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                            800, 600, SDL_WINDOW_RESIZABLE);
+    SDL_SetWindowResizable(Window, SDL_FALSE);
+    if (Window == NULL) {
+        printf("Error : %s\n", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+
+    SDL_Renderer *Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
+    if (Renderer == NULL) {
+        printf("Error : %s\n", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+    // Activation de l'alpha (transparence)
+    SDL_SetRenderDrawBlendMode(Renderer, SDL_BLENDMODE_BLEND);
+
+    // Load of pictures
+    loadPictures(&images, Renderer);
+
+    // Creation of rect
+    SDL_Rect TexteRectJ1, TexteRectJ2, TexteRectIA, TexteRectLoad;
+    TexteRectJ1.x = TexteRectJ2.x = 268;
+    TexteRectJ1.y = 192;
+    TexteRectJ1.w = TexteRectJ2.w = TexteRectIA.w = TexteRectLoad.w = 400;
+    TexteRectJ1.h = 60;
+    TexteRectJ2.h = 55;
+    TexteRectIA.h = TexteRectLoad.h = 55;
+
+    TexteRectJ2.y = 329;
+    TexteRectIA.x = TexteRectLoad.x = 219;
+    TexteRectIA.y = TexteRectLoad.y = 247;
 
 
-char* read_string()
-{
-    unsigned int len_max = 16;
-    unsigned int current_size = 16;
-    char* ch = malloc(len_max);
+    SDL_Color black = {0, 0, 0};
 
-    if (ch != NULL)
+    SDL_Surface *SurfaceTexteJ1 = NULL,
+                *SurfaceTexteJ2 = NULL,
+                *SurfaceTexteIA = NULL,
+                *SurfaceTexteLoad = NULL;
+
+    SDL_Texture* Texte1 = NULL,
+               * Texte2 = NULL,
+               * Texte3 = NULL;
+
+
+
+       //*** Main controller loop ***
+    while (gs != EXIT)
     {
-        int c = EOF;
-        unsigned int i = 0;
-        while ((c = getchar()) != '\n' && c != EOF)
-        {
-            ch[i++] =(char)c;
+        //Displays required interface
+        switch (gs){
+            case MENU:
+                if (printPicture(Renderer, images.menuTex) == EXIT_FAILURE)
+                    return EXIT_FAILURE;
+            break;
 
-            if (i == current_size)
-            {
-                current_size = i + len_max;
-                ch = realloc(ch, current_size);
-            }
+            case MENUP:
+                if (printPicture(Renderer, images.playmenuTex) == EXIT_FAILURE)
+                    return EXIT_FAILURE;
+            break;
+
+            case JVJ:
+                if (printPicture(Renderer, images.pseudoTex) == EXIT_FAILURE)
+                    return EXIT_FAILURE;
+
+                TexteRectJ1.w = MIN(400, 25 * TexteLength);
+                if(TexteLength == 0){
+                    TexteRectJ1.w = 400;
+                }
+                SDL_RenderCopy(Renderer, Texte1, NULL, &TexteRectJ1);
+
+                TexteRectJ2.w = MIN(400, 25 * TexteLength2);
+                if(TexteLength2 == 0){
+                    TexteRectJ2.w = 400;
+                }
+                SDL_RenderCopy(Renderer, Texte2, NULL, &TexteRectJ2);
+            break;
+
+            case JVIA:
+                if (printPicture(Renderer, images.pseudoIATex) == EXIT_FAILURE)
+                    return EXIT_FAILURE;
+
+                TexteRectIA.w = MIN(400, 25 * TexteLength);
+                if(TexteLength == 0){
+                    TexteRectIA.w = 400;
+                }
+                SDL_RenderCopy(Renderer, Texte1, NULL, &TexteRectIA);
+            break;
+
+            case LOAD:
+                if (printPicture(Renderer, images.loadgameTex) == EXIT_FAILURE)
+                    return EXIT_FAILURE;
+
+                TexteRectLoad.w = MIN(400, 25 * TexteLength3);
+                if(TexteLength3 == 0){
+                    TexteRectLoad.w = 400;
+                }
+                SDL_RenderCopy(Renderer, Texte3, NULL, &TexteRectLoad);
+            break;
+
+
+            default:
+            break;
         }
-        ch[i] = '\0';
+
+
+
+        //*** General event management ***
+        SDL_Event event;
+        SDL_WaitEvent(&event);
+        switch(event.type){
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_BACKSPACE)
+                {
+                    if (gs == JVIA && TexteLength > 0)
+                    {
+                        TexteLength--;
+                        TexteInput[strlen(TexteInput)-1] = 0;
+                        SurfaceTexteIA = TTF_RenderText_Blended(TexteFont,TexteInput,black);
+                        Texte1 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteIA);
+                    }
+                    else if (gs == JVJ)
+                    {
+                        // Joueur 1
+                        if (isJ1TexteInput && TexteLength > 0)
+                        {
+                            TexteLength--;
+                            TexteInput[strlen(TexteInput)-1] = 0;
+                            SurfaceTexteJ1 = TTF_RenderText_Blended(TexteFont,TexteInput, black);
+
+                            Texte1 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteJ1);
+                        } // Joueur 2
+                        else if (isJ2TexteInput && TexteLength2 > 0)
+                        {
+                            TexteLength2--;
+                            TexteInput2[strlen(TexteInput2)-1] = 0;
+                            SurfaceTexteJ2 = TTF_RenderText_Blended(TexteFont,TexteInput2, black);
+
+                            Texte2 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteJ2);
+                        }
+                    }
+                    else if (gs == LOAD && TexteLength3 > 0)
+                    {
+                        TexteLength3--;
+                        TexteInput3[strlen(TexteInput3)-1] = 0;
+                        SurfaceTexteLoad = TTF_RenderText_Blended(TexteFont,TexteInput3,black);
+                        Texte3 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteLoad);
+                }
+            }
+            break;
+            case SDL_TEXTINPUT:
+                if (gs == JVIA && TexteLength < MAX_NAME_LENGTH)
+                {
+                    TexteLength++;
+                    strcat(TexteInput, event.text.text);
+                    SurfaceTexteIA = TTF_RenderText_Blended(TexteFont,TexteInput, black);
+                    Texte1 = SDL_CreateTextureFromSurface(Renderer, SurfaceTexteIA);
+                }
+                else if (gs == JVJ)
+                {
+                    // Joueur 1
+                    if (isJ1TexteInput && TexteLength < MAX_NAME_LENGTH)
+                    {
+                        TexteLength++;
+                        strcat(TexteInput, event.text.text);
+                        SurfaceTexteJ1 = TTF_RenderText_Blended(TexteFont,TexteInput, black);
+                        Texte1 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteJ1);
+                    } // Joueur 2
+                    else if (isJ2TexteInput && TexteLength2 < MAX_NAME_LENGTH)
+                    {
+                        TexteLength2++;
+                        strcat(TexteInput2, event.text.text);
+                        SurfaceTexteJ2 = TTF_RenderText_Blended(TexteFont,TexteInput2, black);
+                        Texte2 = SDL_CreateTextureFromSurface(Renderer,SurfaceTexteJ2);
+                    }
+                }
+                if (gs == LOAD && TexteLength3 < MAX_NAME_LENGTH)
+                {
+                    TexteLength3++;
+                    strcat(TexteInput3, event.text.text);
+                    SurfaceTexteLoad = TTF_RenderText_Blended(TexteFont,TexteInput3, black);
+                    Texte3 = SDL_CreateTextureFromSurface(Renderer, SurfaceTexteLoad);
+                }
+
+            break;
+            case SDL_MOUSEBUTTONDOWN:
+                if (gs == JVJ)
+                {
+                    int x = event.button.x, y=event.button.y;
+                    // Cliquer l'un des cadres du texte
+                    if (x >= TexteRectJ1.x && x <= TexteRectJ1.x+TexteRectJ1.w &&
+                        y >= TexteRectJ1.y && y <= TexteRectJ1.y+TexteRectJ1.h)
+                    {
+                        SDL_StartTextInput();
+                        isJ1TexteInput = true;
+                        isJ2TexteInput = false;
+                    } else if (x >= TexteRectJ2.x && x <= TexteRectJ2.x+TexteRectJ2.w &&
+                        y >= TexteRectJ2.y && y <=TexteRectJ2.y+TexteRectJ2.h)
+                    {
+                        SDL_StartTextInput();
+                        isJ1TexteInput = false;
+                        isJ2TexteInput = true;
+                    } else {
+                        isJ1TexteInput = false;
+                        isJ2TexteInput = false;
+                        SDL_StopTextInput();
+                    }
+                    // Cliquer sur la bouton 'Valider'
+                    if (x >= 373 && x <= 552 && y >= 410 && y <= 467)
+                    {
+                        printf("Start Game against player\n");
+                        game = initialize_game(TexteInput, TexteInput2);
+
+                        //TODO Start game in dedicated function
+                        gameLoop(game, Renderer, images.gridTex, TexteFont);
+
+                    }
+
+                    // Cliquer sur la bouton 'Retour'
+                    if (x >= 12 && x <= 194 && y >= 523 && y <= 584)
+                    {
+                        gs = MENUP;
+                    }
+                }
+                 else if (gs == JVIA)
+                {
+                    int x = event.button.x, y=event.button.y;
+                    // Cliquer sur le cadre du texte
+                    if (x >= TexteRectIA.x && x <= TexteRectIA.x+TexteRectIA.w &&
+                        y >= TexteRectIA.y && y <= TexteRectIA.y+TexteRectIA.h)
+                    {
+                        isJIATexteInput = true;
+
+                        SDL_StartTextInput();
+                    } else {
+                        isJIATexteInput = false;
+                        SDL_StopTextInput();
+                    }
+
+                    // Cliquer sur la bouton 'Valider'
+                    if (x >= 319 && x <= 497 && y >= 354 && y <= 412)
+                    {
+                        printf("Start Game against AI\n");
+                        game = initialize_game(TexteInput, "Matt");
+                        game.players[1].isAI = 1;
+
+                        //TODO Start game in dedicated function
+                        gameLoop(game, Renderer, images.gridTex, TexteFont);
+
+                    }
+                    // Cliquer sur la bouton 'Retour'
+                    if (x >= 12 && x <=194 && y >= 523 && y <= 584)
+                    {
+                        gs = MENUP;
+                    }
+                }
+                else if (gs == LOAD)
+               {
+                   int x = event.button.x, y=event.button.y;
+                   // Cliquer sur le cadre du texte
+                   if (x >= TexteRectLoad.x && x <= TexteRectLoad.x+TexteRectLoad.w &&
+                       y >= TexteRectLoad.y && y <= TexteRectLoad.y+TexteRectLoad.h)
+                   {
+                       isLoadTexteInput = true;
+
+                       SDL_StartTextInput();
+                   } else {
+                       isLoadTexteInput = false;
+                       SDL_StopTextInput();
+                   }
+
+                   // Cliquer sur la bouton 'Valider'
+                   if (x >= 319 && x <= 497 && y >= 354 && y <= 412)
+                   {
+                       load_game(&game, TexteInput3);
+                       gameLoop(game, Renderer, images.gridTex, TexteFont);
+
+                   }
+                   // Cliquer sur la bouton 'Retour'
+                   if (x >= 12 && x <=194 && y >= 523 && y <= 584)
+                   {
+                       gs = MENUP;
+                   }
+               }
+                else if (gs == MENUP)
+                {
+                    int x = event.button.x, y=event.button.y;
+                    if (x >= 485 && x <= 642 && y >= 211 && y <= 269)
+                    {
+                        gs = JVJ;
+                    }
+                    else if (x >= 195 && x <= 378 && y >= 211 && y <= 269)
+                    {
+                        gs = JVIA;
+                    }
+                    else if (x >= 12 && x <= 195 && y >= 523 && y <= 584)
+                    {
+                        gs = MENU;
+                    }
+                    else if (x >= 159 && x <= 669 && y >= 333 && y <= 403)
+                    {
+                        gs = LOAD;
+                    }
+
+                }
+                else if (gs == MENU)
+                {
+                    int x = event.button.x, y=event.button.y;
+                    if (x >= 298 && x <= 460 && y >= 235 && y <= 308)
+                    {
+                        gs = MENUP;
+                    }
+                    else if (x >= 274 && x <= 463 && y >= 468 && y <= 542)
+                    {
+                        gs = EXIT;
+                    }
+                }
+                break;
+            case SDL_QUIT:
+                gs = EXIT;
+                break;
+        }
+        SDL_SetRenderDrawColor(Renderer, 255, 0, 0, 100);
+        if (isJIATexteInput)
+            SDL_RenderFillRect(Renderer, &TexteRectIA);
+        if (isJ1TexteInput)
+            SDL_RenderFillRect(Renderer, &TexteRectJ1);
+        if (isJ2TexteInput)
+            SDL_RenderFillRect(Renderer, &TexteRectJ2);
+        if (isLoadTexteInput)
+            SDL_RenderFillRect(Renderer, &TexteRectLoad);
+
+        /* À la place de SDL_Flip */
+        SDL_RenderPresent(Renderer);
     }
 
-    return ch;
+
+    FreePictures(&images);
+    SDL_FreeSurface(SurfaceTexteIA);
+    SDL_FreeSurface(SurfaceTexteJ1);
+    SDL_FreeSurface(SurfaceTexteJ2);
+    SDL_FreeSurface(SurfaceTexteLoad);
+    SDL_DestroyTexture(Texte1);
+    SDL_DestroyTexture(Texte2);
+    SDL_DestroyTexture(Texte3);
+    SDL_DestroyWindow(Window);
+    SDL_DestroyRenderer(Renderer);
+    TTF_CloseFont(TexteFont);
+    TTF_Quit();
+    IMG_Quit();
+    SDL_Quit();
+
+    return EXIT_SUCCESS;
+
 }

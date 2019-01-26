@@ -54,6 +54,7 @@ void save_game(Game game, char * save_name){
 
     json_object ** j_player_pseudo = (json_object**) malloc(2 * sizeof(json_object*));
     json_object ** j_player_score = (json_object**) malloc(2 * sizeof(json_object*));
+    json_object ** j_player_isai = (json_object**) malloc(2 * sizeof(json_object*));
 
     for(int i=0; i<2; i++){
         j_players[i] = json_object_new_object();
@@ -65,6 +66,10 @@ void save_game(Game game, char * save_name){
             //player.score
         j_player_score[i] = json_object_new_int(game.players[i].score);
         json_object_object_add(j_players[i], "score", j_player_score[i]);
+
+            //player.isAI
+        j_player_isai[i] = json_object_new_int(game.players[i].isAI);
+        json_object_object_add(j_players[i], "isAI", j_player_isai[i]);
 
             //Appending to array
         json_object_array_add(j_players_array, j_players[i]);
@@ -95,6 +100,7 @@ void save_game(Game game, char * save_name){
 
     free(j_players);
     free(j_player_score);
+    free(j_player_isai);
     free(j_player_pseudo);
 
 }
@@ -167,10 +173,15 @@ void load_game(Game * game, char * save_name){
         memset(game->players[i].pseudo, '\0', (json_object_get_string_len(j_player_pseudo)+1));
         strcpy(game->players[i].pseudo, json_object_get_string(j_player_pseudo));
 
-            //player.seeds_captured
+            //player.score
         json_object * j_player_score;
         json_object_object_get_ex(j_players, "score", &j_player_score);
         game->players[i].score = json_object_get_int(j_player_score);
+
+            //player.isAI
+        json_object * j_player_isai;
+        json_object_object_get_ex(j_players, "isAI", &j_player_isai);
+        game->players[i].isAI = json_object_get_int(j_player_isai);
     }
 
 

@@ -5,8 +5,11 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
+
+#define MAX_NAME_LENGTH 50
+
 typedef enum gameState {
-    MENU, LOAD,MENUP,JVJ, JVIA, EXIT
+    MENU, LOAD, MENUP, JVJ, JVIA, EXIT, GAME
 } gameState;
 
 typedef struct Images{
@@ -15,8 +18,9 @@ typedef struct Images{
     SDL_Texture* pseudoIATex;
     SDL_Texture* playmenuTex;
     SDL_Texture* loadgameTex;
-//    SDL_Texture* gridTex;
+    SDL_Texture* gridTex;
 } Images;
+
 void FreePictures(Images* images);
 void loadPictures(Images* images, SDL_Renderer* Renderer);
 int printPicture(SDL_Renderer* Renderer, SDL_Texture* texture);
