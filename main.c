@@ -319,8 +319,10 @@ int main(int argc, char ** argv)
                    // Cliquer sur la bouton 'Valider'
                    if (x >= 319 && x <= 497 && y >= 354 && y <= 412)
                    {
-                       load_game(&game, TexteInput3);
-                       gameLoop(game, Renderer, images.gridTex, TexteFont);
+                       if(load_game(&game, TexteInput3)){
+                           gameLoop(game, Renderer, images.gridTex, TexteFont);
+                       }
+
 
                    }
                    // Cliquer sur la bouton 'Retour'

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game.h"
+#include <unistd.h>
 
 typedef struct{
     char * player1_name;
@@ -17,7 +18,7 @@ typedef struct{
 
 
 void save_game(Game game, char * save_name);
-void load_game(Game * game, char * save_name);
+int load_game(Game * game, char * save_name);
 
 void save_scores(Scores  scores);
 void load_scores(Scores * scores);
